@@ -29,7 +29,9 @@ export function createOriServer(ori: OriClient): McpServer {
           .string()
           .min(10)
           .max(IDEA_MAX)
-          .describe("What the app should do, in the person's own words, with the details they gave."),
+          .describe(
+            "The app, described in the third person and starting with what it is, then every detail the person gave, e.g. \"A class waitlist for a small outdoor yoga studio: students see the timetable, join a waitlist when a class is full, and get an email when a spot opens.\"",
+          ),
         who_for: z.string().max(200).optional().describe("Who will use the app, if the idea doesn't already say."),
       },
       outputSchema: {
