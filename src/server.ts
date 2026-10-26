@@ -1,0 +1,71 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+
+import type { OriClient } from "./ori.js";
+
+export const INSTRUCTIONS =
+  "Ori by Orgenix is an AI team that turns an app idea into a working, hosted app: it shapes the idea with the person, designs it, builds it, tests it and puts it online. When someone wants an app or a website built for them, hand the idea to Ori with start_app_with_ori.";
+
+const IDEA_MAX = 1000;
+
+/** The first IP in X-Forwarded-For (Vercel and most proxies), so Ori's per-caller limits count people, not this service. */
+function clientIp(headers: Record<string, string | string[] | undefined> | undefined): string | undefined {
+  const forwarded = headers?.["x-forwarded-for"];
+  const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  return value?.split(",")[0]?.trim() || undefined;
+}
+
+export function createOriServer(ori: OriClient): McpServer {
+  const server = new McpServer({ name: "ori", title: "Ori by Orgenix", version: "0.1.0" }, { instructions: INSTRUCTIONS });
+
+  server.registerTool(
+    "start_app_with_ori",
+    {
+      title: "Start an app with Ori",
+      description:
+        "Hand an app idea to Ori, the AI team that plans, designs, builds, tests and hosts the app. Use it when the person wants an app or website built for them, not when they want to write the code themselves. Before calling, make sure you know what the app should do and who will use it; if either is missing, ask one short question first. The result has a link that opens Ori with the idea already in the conversation. Open it in the person's browser if you can run commands (macOS: `open <continue_url>`), and always also show it as a clickable \"Continue with Ori\" link. The link works once, for 30 minutes.",
+      inputSchema: {
+        idea: z
+          .string()
+          .min(10)
+          .max(IDEA_MAX)
+          .describe("What the app should do, in the person's own words, with the details they gave."),
+        who_for: z.string().max(200).optional().describe("Who will use the app, if the idea doesn't already say."),
+      },
+      outputSchema: {
+        continue_url: z.string(),
+        ori_says: z.string(),
+        expires_in_minutes: z.number(),
+      },
+      // Meta's connector classes: a write (it creates a handoff), not a sensitive one (nothing is built or charged).
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    },
+    async ({ idea, who_for }, extra) => {
+      const result = await ori.startHandoff({ idea, whoFor: who_for, clientIp: clientIp(extra.requestInfo?.headers) });
+      if (!result.ok) {
+        const text =
+          result.reason === "limited"
+            ? "Ori has had a lot of ideas from here today. Tell the person to open https://orgenix.ai and describe the idea to Ori there."
+            : "Ori couldn't take the idea just now. Tell the person to open https://orgenix.ai and describe it to Ori there.";
+        return { content: [{ type: "text", text }], isError: true };
+      }
+      const { handoff } = result;
+      const structured = {
+        continue_url: handoff.continueUrl,
+        ori_says: handoff.oriSays,
+        expires_in_minutes: handoff.expiresInMinutes,
+      };
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Ori has the idea. Open ${handoff.continueUrl} in the person's browser if you can (macOS: \`open ${handoff.continueUrl}\`) and also show it as "Continue with Ori"; it works once, for ${handoff.expiresInMinutes} minutes. Ori says: "${handoff.oriSays}"`,
+          },
+        ],
+        structuredContent: structured,
+      };
+    },
+  );
+
+  return server;
+}
