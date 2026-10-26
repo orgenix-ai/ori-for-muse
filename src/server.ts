@@ -69,5 +69,44 @@ export function createOriServer(ori: OriClient): McpServer {
     },
   );
 
+  server.registerTool(
+    "app_status",
+    {
+      title: "Check your apps in Ori",
+      description:
+        "Where each of the person's Ori apps stands: its stage (shaping the idea, planning and prototype, building and testing, live…), what is waiting on them (like confirming the prototype or going live) and its live address. Needs the person signed in to Ori; if they aren't, tell them to run `muse mcp login ori`. Show each app as a short line, with \"Open in Ori\" links for anything waiting on them.",
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async (extra) => {
+      const token = extra.authInfo?.token;
+      if (!token) {
+        return {
+          content: [{ type: "text", text: "The person isn't signed in to Ori yet. Tell them to run `muse mcp login ori`, then ask again." }],
+          isError: true,
+        };
+      }
+      const result = await ori.listApps(token);
+      if (!result.ok) {
+        const text =
+          result.reason === "signed_out"
+            ? "Ori's sign-in has expired. Tell the person to run `muse mcp login ori`, then ask again."
+            : "Ori couldn't answer just now. Try again in a minute.";
+        return { content: [{ type: "text", text }], isError: true };
+      }
+      if (result.apps.length === 0) {
+        return { content: [{ type: "text", text: "The person has no apps in Ori yet. Offer to start one with start_app_with_ori." }] };
+      }
+      const lines = result.apps.map((app) => {
+        const waiting = app.waiting_on_you.length ? ` Waiting on you: ${app.waiting_on_you.join("; ")} (Open in Ori: ${app.open_url}).` : "";
+        const live = app.live_url ? ` Live at ${app.live_url}.` : "";
+        return `- ${app.name}: ${app.stage.label}.${live}${waiting}`;
+      });
+      return {
+        content: [{ type: "text", text: lines.join("\n") }],
+        structuredContent: { apps: result.apps },
+      };
+    },
+  );
+
   return server;
 }

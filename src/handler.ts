@@ -19,9 +19,34 @@ export async function handleMcp(request: Request, ori: OriClient = oriFromEnv())
   const server = createOriServer(ori);
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   await server.connect(transport);
+  // Signed in through Ori (Supabase OAuth 2.1): the token goes to Ori as is, and Ori checks it. Without one, only
+  // start_app_with_ori works.
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
   try {
-    return await transport.handleRequest(request);
+    return await transport.handleRequest(request, token ? { authInfo: { token, clientId: "", scopes: [] } } : undefined);
   } finally {
     void server.close();
   }
+}
+
+/**
+ * OAuth protected resource metadata (RFC 9728): tells Muse Code which
+ * authorization server signs people in for this endpoint (Ori's, run by
+ * Supabase Auth), so `muse mcp login ori` can discover it.
+ */
+export function protectedResourceMetadata(request: Request, env = process.env): Response {
+  const issuer = env.ORI_AUTH_ISSUER;
+  if (!issuer) return Response.json({ error: "Set ORI_AUTH_ISSUER" }, { status: 500 });
+  const origin = new URL(request.url).origin;
+  return Response.json(
+    {
+      resource: `${origin}${env.ORI_MCP_PATH ?? "/mcp"}`,
+      authorization_servers: [issuer],
+      bearer_methods_supported: ["header"],
+      scopes_supported: ["openid", "email", "profile"],
+      resource_name: "Ori by Orgenix",
+      resource_documentation: "https://github.com/orgenix-ai/ori-for-muse",
+    },
+    { headers: { "cache-control": "public, max-age=300" } },
+  );
 }

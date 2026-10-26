@@ -1,0 +1,11 @@
+
+> ori-for-muse@0.1.0 dev
+> tsx watch src/main.ts
+
+Ori for Muse on http://localhost:8787/mcp
+1:13:40 PM [tsx] change in ./src/server.ts Restarting...
+cOri for Muse on http://localhost:8787/mcp
+1:23:14 PM [tsx] change in ./src/ori.ts Restarting...
+cOri for Muse on http://localhost:8787/mcp
+1:23:29 PM [tsx] change in ./src/server.ts Restarting...
+cOri for Muse on http://localhost:8787/mcp

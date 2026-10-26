@@ -10,8 +10,21 @@ export interface Handoff {
 
 export type HandoffResult = { ok: true; handoff: Handoff } | { ok: false; reason: "limited" | "unavailable" };
 
+export interface OriApp {
+  id: string;
+  name: string;
+  stage: { key: string; label: string };
+  waiting_on_you: string[];
+  live_url: string | null;
+  open_url: string;
+}
+
+export type AppsResult = { ok: true; apps: OriApp[] } | { ok: false; reason: "signed_out" | "unavailable" };
+
 export interface OriClient {
   startHandoff(input: { idea: string; whoFor?: string; clientIp?: string }): Promise<HandoffResult>;
+  /** The signed-in person's apps, read with their own access token from Ori's sign-in. */
+  listApps(accessToken: string): Promise<AppsResult>;
 }
 
 export function httpOriClient(options: { baseUrl: string; token: string; fetch?: typeof fetch }): OriClient {
@@ -35,6 +48,16 @@ export function httpOriClient(options: { baseUrl: string; token: string; fetch?:
         ok: true,
         handoff: { continueUrl: body.continue_url, oriSays: body.ori_says, expiresInMinutes: body.expires_in_minutes },
       };
+    },
+    async listApps(accessToken) {
+      const response = await doFetch(new URL("/api/connector/apps", options.baseUrl), {
+        headers: { authorization: `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (response.status === 401) return { ok: false, reason: "signed_out" };
+      if (!response.ok) return { ok: false, reason: "unavailable" };
+      const body = (await response.json()) as { apps: OriApp[] };
+      return { ok: true, apps: body.apps };
     },
   };
 }

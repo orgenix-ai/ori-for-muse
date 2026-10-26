@@ -23,16 +23,22 @@ Tell Muse Code what you want built. Ori's team takes it from there: it shapes th
 
 Muse Code hands the idea to Ori and opens Ori in your browser with your idea already in the conversation.
 
+4. To check on your apps from Muse Code, sign in to Ori once:
+
+   ```bash
+   muse mcp login ori
+   ```
+
+   Your browser opens Ori's sign-in and a short "Connect Muse Code to Ori?" card. After that, ask Muse Code "How are my apps doing?".
+
 ## Tools
 
 | Tool | What it does | Meta class |
 | --- | --- | --- |
 | `start_app_with_ori` | Hands an app idea to Ori and returns a one-time link (30 minutes) that opens Ori with it | Write (nothing is built or charged) |
+| `app_status` | Lists your apps: stage, what's waiting on you (like confirming the prototype or going live) with a link to do it in Ori, and the live address. Needs sign-in. | Read |
 
-Coming during the hackathon:
-- sign-in from Muse Code (`muse mcp login ori`, OAuth with PKCE);
-- `app_status` (stage, prototype link, live URL);
-- links for the two decisions that matter: building the prototype and going live.
+Sign-in is standard MCP OAuth: Ori's authorization server (Supabase Auth's OAuth 2.1 server) uses PKCE and dynamic client registration, and this endpoint publishes its protected resource metadata at `/.well-known/oauth-protected-resource`. Your access token goes to Ori as is; this service stores nothing.
 
 ## Run it locally
 
@@ -47,6 +53,7 @@ Then use `http://localhost:8787/mcp` as the server URL in Muse Code's settings.
 | --- | --- |
 | `ORI_BASE_URL` | The Ori instance to hand ideas to |
 | `ORI_CONNECTOR_TOKEN` | This service's key for Ori's connector API |
+| `ORI_AUTH_ISSUER` | Ori's authorization server (e.g. `https://<ref>.supabase.co/auth/v1`) |
 | `PORT` | Local port (default 8787) |
 
 ## How it works
