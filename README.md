@@ -31,6 +31,26 @@ Muse Code hands the idea to Ori and opens Ori in your browser with your idea alr
 
    Your browser opens Ori's sign-in and a short "Connect Muse Code to Ori?" card. After that, ask Muse Code "How are my apps doing?".
 
+## Ori Replay: see how Ori built an app
+
+`replay/` is a viewer for **Ori Replay**: one real app's journey through Ori's team, room by room. Each room shows what was decided and produced:
+- Direction, the conversation and the brief;
+- Design Studio;
+- the Plan;
+- the clickable Prototype;
+- Architecture decisions and what the reviewers caught;
+- Build and independent QA;
+- the live app.
+
+It shows outcomes only; Ori's prompts and methods stay on Ori's servers.
+
+```bash
+npm run replay
+# then open http://localhost:8790/?id=<replay id>
+```
+
+It reads `https://alpha.orgenix.ai/api/replay/<id>`. Pass `&api=<origin>` to read another Ori instance.
+
 ## Tools
 
 | Tool | What it does | Meta class |

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ori Replay</title>
+<meta name="description" content="One app's journey through Ori, the AI software team, room by room.">
+<style>
+  :root {
+    --bg: #f7f7f4; --surface: #ffffff; --ink: #16181d; --muted: #5d6470; --line: #e3e4e0;
+    --accent: #1fa595; --accent-ink: #0d5f56; --accent-soft: #e2f4f1; --warn: #b5651d; --warn-soft: #fbefe2;
+    --pass: #2f7d32; --pass-soft: #e6f2e6; --radius: 14px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 4px 16px rgba(16, 24, 40, .05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1013; --surface: #171a1f; --ink: #eceef1; --muted: #9aa2ae; --line: #262a31;
+      --accent: #4fd1c5; --accent-ink: #9be8df; --accent-soft: #16302d; --warn: #f0a35c; --warn-soft: #33261a;
+      --pass: #7fd483; --pass-soft: #1a2e1b; --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent-ink); }
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 14px 0; font-weight: 600; }
+  .ring { width: 22px; height: 22px; border-radius: 50%; border: 4px solid var(--accent); }
+  .brand small { color: var(--muted); font-weight: 400; }
+  .hero { padding: 28px 0 22px; }
+  .hero h1 { margin: 0 0 6px; font-size: clamp(26px, 4vw, 38px); letter-spacing: -.02em; }
+  .hero p.lead { margin: 0; color: var(--muted); max-width: 70ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--muted); }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .layout { display: grid; grid-template-columns: 220px 1fr; gap: 28px; padding: 28px 0 60px; }
+  nav.rooms { position: sticky; top: 16px; align-self: start; display: flex; flex-direction: column; gap: 2px; }
+  nav.rooms a { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: 14px; }
+  nav.rooms a:hover, nav.rooms a.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+  nav.rooms .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--accent-soft); color: var(--accent-ink); flex: none; }
+  section.room { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px 24px; margin-bottom: 18px; scroll-margin-top: 16px; }
+  section.room h2 { margin: 0 0 4px; font-size: 20px; letter-spacing: -.01em; }
+  section.room .what { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 8px; font-weight: 600; }
+  .bubble { max-width: 78ch; padding: 10px 14px; border-radius: 14px; margin: 8px 0; white-space: pre-wrap; }
+  .bubble.ori { background: var(--accent-soft); border-top-left-radius: 4px; }
+  .bubble.founder { background: var(--bg); border: 1px solid var(--line); margin-left: auto; border-top-right-radius: 4px; }
+  .who { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg); }
+  .card.chosen { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .card h4 { margin: 0 0 4px; font-size: 15px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  ul.plain { margin: 0; padding-left: 18px; }
+  ul.plain li { margin: 4px 0; }
+  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); margin-right: 6px; }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.pass { background: var(--pass-soft); color: var(--pass); }
+  .timeline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .step { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--bg); }
+  .arrow { color: var(--muted); }
+  .button { display: inline-block; background: var(--accent); color: #fff; padding: 10px 16px; border-radius: 10px; text-decoration: none; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .button { color: #0e1013; } }
+  .empty { color: var(--muted); font-style: italic; }
+  details summary { cursor: pointer; color: var(--accent-ink); margin-top: 6px; }
+  footer { color: var(--muted); font-size: 13px; padding: 0 0 40px; }
+  #status { padding: 40px 0; color: var(--muted); }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; gap: 12px; padding-top: 12px; }
+    nav.rooms { position: static; flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+    nav.rooms a { white-space: nowrap; background: var(--surface); border: 1px solid var(--line); }
+    section.room { padding: 18px 16px; }
+  }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap brand"><span class="ring" aria-hidden="true"></span>Ori Replay <small>· Ori by Orgenix, on Meta Muse</small></div></header>
+<main class="wrap">
+  <div id="status">Loading the journey…</div>
+  <div id="app" hidden></div>
+</main>
+<footer class="wrap">Ori Replay shows what Ori's team decided and produced for this app, room by room. Built with Meta's Muse models. <a href="https://github.com/orgenix-ai/ori-for-muse">github.com/orgenix-ai/ori-for-muse</a></footer>
+<script type="module" src="./replay.js"></script>
+</body>
+</html>
